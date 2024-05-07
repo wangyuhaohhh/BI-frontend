@@ -46,7 +46,7 @@ const AddChart: React.FC = () => {
         }
       }
     } catch (e: any) {
-      message.error('分析失败，' + e.message);
+      message.error('分析失败1111，' + e.message);
     }
     setSubmitting(false);
   };

@@ -10,6 +10,7 @@ import {getLoginUserUsingGET} from "@/services/whbi/userController";
 const isDev = process.env.NODE_ENV === 'development';
 const loginPath = '/user/login';
 
+
 /**
  * @see  https://umijs.org/zh-CN/plugins/plugin-initial-state
  * */
@@ -125,3 +126,4 @@ export const request = {
   withCredentials:true,
   ...errorConfig,
 };
+

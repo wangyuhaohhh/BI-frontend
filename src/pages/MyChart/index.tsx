@@ -1,6 +1,6 @@
 import { listMyChartByPageUsingPOST } from '@/services/whbi/chartController';
 import React,{ useEffect,useState } from 'react';
-import { Avatar, Card, List, message } from 'antd';
+import { Avatar, Card, Collapse, List, message, Result, Typography } from 'antd';
 import ReactECharts from 'echarts-for-react';
 import { useModel } from '@@/exports';
 import Search from 'antd/es/input/Search';
@@ -14,6 +14,8 @@ const MyChartPage: React.FC = () => {
   const initSearchParams = {
     current:1,
     pageSize:4,
+    sortField:'createTime',
+    sortOrder:'desc'
   };
 
   const [searchParams, setSearchParams] = useState<API.ChartQueryRequest>({ ...initSearchParams });
@@ -33,9 +35,11 @@ const MyChartPage: React.FC = () => {
         //去除图表标题
         if (res.data.records){
           res.data.records.forEach(data=>{
-            const chartOption=JSON.parse(data.genChart??'{}');
-            chartOption.title=undefined;
-            data.genChart=JSON.stringify(chartOption);
+            if(data.status==='succeed'){
+              const chartOption=JSON.parse(data.genChart??'{}');
+              chartOption.title=undefined;
+              data.genChart=JSON.stringify(chartOption);
+            }
           })
         }
       } else {
@@ -51,6 +55,7 @@ const MyChartPage: React.FC = () => {
     loadData();
   }, [searchParams]);
 
+  const { Paragraph } = Typography;
   return (
     <div className="my-chart-page">
       <div>
@@ -96,10 +101,45 @@ const MyChartPage: React.FC = () => {
                 title={item.name}
                 description={item.chartType?('图表类型：'+item.chartType):undefined}
               />
-              <div style={{marginBottom:16}}/>
-              <p>{'分析目标：'+item.goal}</p>
-              <div style={{marginBottom:16}}/>
-              <ReactECharts option={item.genChart&&JSON.parse(item.genChart)}/>
+              <>
+                {
+                  item.status === 'wait' && <>
+                    <Result
+                      status="warning"
+                      title="等待中···"
+                      subTitle={item.execMessage ?? '当前图表生成任务繁忙，请耐心等候'}
+                    />
+                  </>
+                }
+                {
+                  item.status === 'running' && <>
+                    <Result
+                      status="info"
+                      title="图表生成中···"
+                      subTitle={item.execMessage}
+                    />
+                  </>
+                }
+                {
+                  item.status === 'succeed' && <>
+                    <div style={{marginBottom:16}}/>
+                    <p>{'分析目标：'+item.goal}</p>
+                    <div style={{marginBottom:16}}/>
+                    <ReactECharts option={item.genChart&&JSON.parse(item.genChart)}/>
+                    <div style={{marginBottom:16}}/>
+                    <Collapse items={[{ label: '分析结论', children: <Paragraph copyable>{item.genResult}</Paragraph> }]} bordered={false} />
+                  </>
+                }
+                {
+                  item.status === 'failed' && <>
+                    <Result
+                      status="error"
+                      title="图表生成失败！"
+                      subTitle={item.execMessage}
+                    />
+                  </>
+                }
+              </>
             </Card>
           </List.Item>
         )}
